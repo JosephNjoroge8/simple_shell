@@ -1,5 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include "main.h"
 
 /*
  * custom_getline - gets a new line for the user
@@ -11,6 +10,8 @@
  */
 ssize_t custom_getline(char **lineptr, size_t *n, FILE *stream)
 {
+	size_t count = 0;
+	int current_char;
 	if (lineptr == NULL || n == NULL)
 	{
 		size_t initial_size = 128;
@@ -22,8 +23,6 @@ ssize_t custom_getline(char **lineptr, size_t *n, FILE *stream)
 		}
 		*n = initial_size;
 	}
-	size_t count = 0;
-	int current_char;
 
 	while ((current_char = fgetc(stream)) != EOF && current_char != '\n')
 	{
@@ -50,23 +49,4 @@ ssize_t custom_getline(char **lineptr, size_t *n, FILE *stream)
 	}
 	(*lineptr)[count] = '\0';
 	return (count);
-}
-/**
- * main - entry point of the program
- *
- * Return: Always 0
- */
-int main(void)
-{
-	char *line = NULL;
-	size_t len = 0;
-
-	printf("$");
-	ssize_t read_chars = custom_getline(&line, &len, stdin);
-	if (read_chars != -1)
-	{
-		printf("%s", line);
-	}
-	free(line);
-	return (0);
 }
