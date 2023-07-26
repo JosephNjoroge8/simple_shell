@@ -73,7 +73,7 @@ char *find_executable(char *cmd, char *paths[])
 		{
 			return (strdup(full_path));
 					}
-					}			
+					}
 	return (NULL);
 
 }
