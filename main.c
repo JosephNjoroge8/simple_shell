@@ -17,11 +17,10 @@ int main(int argc __attribute__((unused)), char *argv[])
 	tokenize_path(path, paths);
 	while (1)
 	{
-		printf("$ ");
-		fflush(stdout);
+		write(1, "$ ", 2);
 		if (fgets(input, MAX_INPUT, stdin) == NULL)
 		{
-			printf("\n");
+			write(1, "\n", 1);
 			break;
 		}
 		input[strcspn(input, "\n")] = '\0';
