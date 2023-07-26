@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #define MAX_INPUT 100
 #define MAX_ARGS 64
+extern char **environ;
 char *write_input();
 void execute_command(char *command);
 #define MAX_PATH 500

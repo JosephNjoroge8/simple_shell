@@ -1,4 +1,5 @@
 #include "main.h"
+#include <unistd.h>
 /**
  *
  *
@@ -20,8 +21,8 @@ void execute_command(char *command)
 		argv[0] = command;
 		argv[1] = NULL;
 
-                execve(command, argv, NULL);
-                perror("error");
+                execve(command, argv, environ);
+                fprintf(stderr, "%s: 1: %s: not found\n", argv[0], command);
                 exit(EXIT_FAILURE);
         }
         else
