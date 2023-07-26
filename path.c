@@ -28,6 +28,7 @@ char *retrieve_path()
 	}
 	result[i - 1] = '\0';
 
+	free(copy);
 	return (result);
 }
 /**
@@ -72,7 +73,7 @@ char *find_executable(char *cmd, char *paths[])
 		{
 			return (strdup(full_path));
 					}
-					}
-					return (NULL);
+					}			
+	return (NULL);
 
 }
