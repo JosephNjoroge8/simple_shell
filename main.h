@@ -9,7 +9,7 @@
 #define MAX_INPUT 100
 #define MAX_ARGS 64
 void handle_arguments(int argc, char *argv[]);
-int main();
+int main(void);
 char *retrieve_path();
 void tokenize_path(char *path, char *paths[]);
 char *find_executable(char *command, char *paths[]);
