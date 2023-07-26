@@ -1,92 +1,104 @@
 #include "main.h"
-#include <unistd.h>
 /**
- *
+ *main - entery point
+ *@argc: argument count
+ *@argv: argument vector
+ *Return: 0 sucess
  *
  *
  */
-void execute_command(char *command)
+int main(int argc __attribute__((unused)), char *argv[])
 {
-        pid_t pid;
+	char input[MAX_INPUT];
+	char *paths[MAX_PATH];
+	char *path;
 
-        pid = fork();
-        if (pid < 0)
-        {
-                perror("error");
-                exit(EXIT_FAILURE);
-        }
-        else if (pid == 0)
-        {
-		char *argv[2];
-		argv[0] = command;
-		argv[1] = NULL;
-
-                execve(command, argv, environ);
-                fprintf(stderr, "%s: 1: %s: not found\n", argv[0], command);
-                exit(EXIT_FAILURE);
-        }
-        else
-        {
-                wait(NULL);
-        }
-}
-/**
- *
- *
- *
- *
- *
- *
- */
-char *write_input()
-{
-	size_t len;
-	char *input = malloc(MAX_INPUT);
-
-	if (!input)
+	path = retrieve_path();
+	tokenize_path(path, paths);
+	while (1)
 	{
-		perror("error");
-		exit(EXIT_FAILURE);
-	}
-	printf("$ ");
-	fflush(stdout);
-
-	if(fgets(input, MAX_INPUT, stdin) == NULL)
-	{
-		free(input);
-		return (NULL);
-	}
-	len = strlen(input);
-	if (input[len - 1] == '\n')
-	{
-		input[len - 1] = '\0';
-	}
-	return (input);
-}
-/**
- *
- *
- *
- *
- *
- */
-int main(void)
-{
-	char *input;
-
-	while(1)
-	{
-		input = write_input();
-		if (input == NULL)
+		printf("$ ");
+		fflush(stdout);
+		if (fgets(input, MAX_INPUT, stdin) == NULL)
 		{
 			printf("\n");
 			break;
 		}
-		if (input[0] != '\0')
+		input[strcspn(input, "\n")] = '\0';
+		if (input[0] == '\0')
 		{
-			execute_command(input);
+			continue;
 		}
-		free(input);
+		handle_command(input, paths, argv);
 	}
 	return (0);
+}
+/**
+ *handle_command - handle some commands
+ *@input: input of the commands
+ *@paths: paths of the files
+ *@argv: argument vector
+ */
+void handle_command(char *input, char *paths[], char *argv[])
+{
+	char *pargs[MAX_ARGS];
+
+
+	pargs[0] = strdup(input);
+	pargs[1] = NULL;
+
+	if (strcmp(pargs[0], "exit") == 0)
+	{
+		free(pargs[0]);
+		exit(EXIT_SUCCESS);
+	}
+	else if (strcmp(pargs[0], "env") == 0)
+	{
+		shell_env(pargs);
+	}
+	else
+	{
+		execute_command(pargs, paths, argv);
+	}
+	free(pargs[0]);
+}
+/**
+ *execute_command - execute some commands using the execve
+ *@pargs: pargs
+ *@paths: path of the files
+ *@argv: argument vector
+ */
+void execute_command(char *pargs[], char *paths[], char *argv[])
+{
+	char *executable_path;
+	pid_t pid;
+	int status;
+	char *env[] = {NULL};
+
+	executable_path = find_executable(pargs[0], paths);
+	if (executable_path == NULL)
+	{
+		fprintf(stderr, "%s: %d: %s: not found\n", argv[0], 1, pargs[0]);
+		return;
+	}
+	pid = fork();
+	if (pid == -1)
+	{
+		perror("Error");
+		exit(EXIT_FAILURE);
+	}
+	else if (pid == 0)
+	{
+		if (execve(pargs[0], pargs, env) == -1)
+		{
+			free(executable_path);
+			perror("error");
+			exit(EXIT_FAILURE);
+		}
+	}
+	else
+	{
+		waitpid(pid, &status, 0);
+	}
+	free(executable_path);
 }
