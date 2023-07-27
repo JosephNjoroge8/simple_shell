@@ -10,15 +10,22 @@ char *retrieve_path()
 	char *copy = strdup(path);
 	char *dire;
 	char *result;
-	int i = 0;
+	int i = 0, total_length = 0;
 
-	result = malloc(sizeof(char) * MAX_PATH);
+	dire = strtok(copy, ":");
+	while (dire != NULL)
+	{
+		total_length += strlen(dire) + 1;
+		dire = strtok(NULL, ":");
+	}
+	result = malloc(total_length + 1);
 	if (result == NULL)
 	{
 		return (NULL);
 	}
+	copy = strdup(path);
 	dire = strtok(copy, ":");
-	while (dire != NULL)
+	while(dire != NULL)
 	{
 		strcpy(result + i, dire);
 		i += strlen(dire);
@@ -27,7 +34,6 @@ char *retrieve_path()
 		dire = strtok(NULL, ":");
 	}
 	result[i - 1] = '\0';
-
 	return (result);
 }
 /**
@@ -46,6 +52,7 @@ void tokenize_path(char *path, char *paths[])
 		i++;
 		paths[i] = strtok(NULL, ":");
 	}
+	paths[i] = NULL;
 }
 /**
  *find_executable-to check for the executable file
