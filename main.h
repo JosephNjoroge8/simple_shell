@@ -17,7 +17,7 @@ int shell_exit(char **args);
 int shell_env(char **args);
 extern char **environ;
 void handle_command(char *input, char *paths[], char *argv[]);
-void execute_command(char *pargs[], char *paths[], char *argv[]);
+void execute_command(char *pargs[], char *paths[]);
 
 #define MAX_PATH 500
 #define MAX_PATH_LEN 1024

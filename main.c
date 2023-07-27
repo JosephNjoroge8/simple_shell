@@ -39,28 +39,38 @@ int main(int argc __attribute__((unused)), char *argv[])
  *@paths: paths of the files
  *@argv: argument vector
  */
-void handle_command(char *input, char *paths[], char *argv[])
+void handle_command(char *input, char *paths[], char *argv[] __attribute__((unused)))
 {
 	char *pargs[MAX_ARGS];
+	char *executable;
+	int i = 0;
 
-
-	pargs[0] = strdup(input);
-	pargs[1] = NULL;
+	tokenize_path(input, pargs);
 
 	if (strcmp(pargs[0], "exit") == 0)
 	{
-		free(pargs[0]);
-		exit(EXIT_SUCCESS);
+		shell_exit(pargs);
+		return;
 	}
 	else if (strcmp(pargs[0], "env") == 0)
 	{
 		shell_env(pargs);
+		return;
+	}
+	executable = find_executable(pargs[0], paths);
+	if (executable != NULL)
+	{
+		execute_command(pargs, paths);
+		free(executable);
 	}
 	else
 	{
-		execute_command(pargs, paths, argv);
+		printf("%s:command not found\n", pargs[0]);
 	}
-	free(pargs[0]);
+	for (i = 0; pargs[i] != NULL; i++)
+	{
+		free(pargs[i]);
+	}
 }
 /**
  *execute_command - execute some commands using the execve
@@ -68,37 +78,30 @@ void handle_command(char *input, char *paths[], char *argv[])
  *@paths: path of the files
  *@argv: argument vector
  */
-void execute_command(char *pargs[], char *paths[], char *argv[])
+void execute_command(char *pargs[], char *paths[])
 {
-	char *executable_path;
-	pid_t pid;
+	pid_t child_pid;
 	int status;
-	char *env[] = {NULL};
+	char *executable;
 
-	executable_path = find_executable(pargs[0], paths);
-	if (executable_path == NULL)
+	child_pid = fork();
+	if (child_pid == -1)
 	{
-		fprintf(stderr, "%s: %d: %s: not found\n", argv[0], 1, pargs[0]);
-		return;
-	}
-	pid = fork();
-	if (pid == -1)
-	{
-		perror("Error");
+		perror("fork");
 		exit(EXIT_FAILURE);
 	}
-	else if (pid == 0)
+	else if (child_pid == 0)
 	{
-		if (execve(pargs[0], pargs, env) == -1)
-		{
-			free(executable_path);
-			perror("error");
-			exit(EXIT_FAILURE);
-		}
+		executable = find_executable(pargs[0], paths);
+		execv(executable, pargs);
+		perror("execv");
+		free(executable);
+		exit(EXIT_FAILURE);
 	}
 	else
 	{
-		waitpid(pid, &status, 0);
+		waitpid(child_pid, &status, 0);
 	}
-	free(executable_path);
 }
+
+
