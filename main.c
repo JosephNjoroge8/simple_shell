@@ -1,120 +1,234 @@
 #include "main.h"
 /**
- *main - entery point
- *@argc: argument count
- *@argv: argument vector
- *Return: 0 sucess
- *
- *
+ * display_prompt - Displays shell prompt if input is coming
+ * from the terminal
+ * Return: Nothing
  */
-int main(int argc __attribute__((unused)), char *argv[])
+void display_prompt(void)
 {
-        char input[MAX_INPUT];
-        char *paths[MAX_PATH];
-        char *path;
-	int i;
-
-        path = retrieve_path();
-        tokenize_path(path, paths);
-        while (1)
-        {
-                printf("$ ");
-                fflush(stdout);
-                if (fgets(input, MAX_INPUT, stdin) == NULL)
-                {
-                        printf("\n");
-                        break;
-                }
-                input[strcspn(input, "\n")] = '\0';
-                if (input[0] == '\0')
-                {
-                        continue;
-                }
-                handle_command(input, paths, argv);
-        }
-	for (i = 0; paths[i] != NULL; i++)
-	{
-		free(paths[i]);
-	}
-	if (path != NULL)
-	{
-	free(path);
-	}
-
-        return (0);
+	if (isatty(STDIN_FILENO) != 0)
+		write(STDOUT_FILENO, "$ ", 2);
 }
+
 /**
- *handle_command - handle some commands
- *@input: input of the commands
- *@paths: paths of the files
- *@argv: argument vector
+ * _strcmp - Compares the similarity of two input strings
+ * @str1: String 1
+ * @str2: String 2
+ * Return: 0 (on success)
  */
-void handle_command(char *input, char *paths[], char *argv[])
+int _strcmp(char *str1, char *str2)
 {
-        char *pargs[MAX_ARGS];
+	int index = 0;
 
+	while (str1[index] != '\0' || str2[index] != '\0')
+	{
+		if (str1[index] != str2[index])
+			return (str1[index] - str2[index]);
 
-                pargs[0] = strdup(input);
-		if (pargs[0] == NULL)
+		index++;
+	}
+	return (0);
+}
+
+/**
+ * _strcat - concatenates two strings
+ * @dest: destination string
+ * @src: source string
+ * Return: Pointer to the concatenated string
+ */
+char *_strcat(char *dest, char *src)
+{
+	int dest_len = 0;
+	int src_len = 0;
+	int i = 0;
+
+	while (dest[dest_len])
+		dest_len++;
+
+	while (src[src_len])
+		src_len++;
+
+	while (src[i])
+	{
+		dest[dest_len + i] = src[i];
+		i++;
+	}
+	dest[dest_len + i] = '\0'; /* Adding null terminator at the end */
+	return (dest);
+}
+
+/**
+ * path - Adds path prefix to the command
+ * @cmd: Command to prefix with path
+ * Return: the complete path
+ */
+char *path(char *cmd)
+{
+	char p1[50] = "/bin/";
+	char p2[50] = "/usr/bin/";
+	struct stat st;
+
+	_strcat(p1, cmd);
+	_strcat(p2, cmd);
+
+	if (stat(p1, &st) == 0)
+		return (strdup(p1));
+	else if (stat(p2, &st) == 0)
+		return (strdup(p2));
+
+	return (strdup(cmd));
+}
+
+/**
+ * checkpath - checks validity of a path
+ * @arguments: parameters
+ * @env: environment variables
+ * @st: pointer to path info
+ * @cmd_line: a pointer to line of args
+ * Return: nothing
+ */
+void checkpath(char **arguments, char **env, struct stat **st, char *cmd_line)
+{
+	pid_t pid;
+	int status;
+
+	if (stat(arguments[0], *st) == 0)
+	{
+		pid = fork();
+		switch (pid)
 		{
-			perror("Error");
-			return;
+			case -1:
+				free(*st);
+				exit(EXIT_FAILURE);
+			case 0:
+				if (execve(arguments[0], arguments, env) == -1)
+				{
+					free(*st);
+					exit(EXIT_FAILURE);
+				}
+				break;
+			default:
+				wait(&status);
+				free(arguments[0]);
+				if (status != 0)
+				{
+					errno = 2;
+					free(cmd_line);
+					free(*st);
+					exit(errno);
+				}
 		}
-                pargs[1] = NULL;
-
-                if (strcmp(pargs[0], "exit") == 0)
-                {
-                        free(pargs[0]);
-                        exit(EXIT_SUCCESS);
-                }
-                else if (strcmp(pargs[0], "env") == 0)
-                {
-                        shell_env(pargs);
-                }
-                else
-                {
-                        execute_command(pargs, paths, argv);
-                }
-                free(pargs[0]);
+	}
+	else
+	{
+		custom_error(arguments[0]);
+		if (!isatty(STDIN_FILENO))
+		{
+			exit(127);
+		}
+	}
 }
+
 /**
- *execute_command - execute some commands using the execve
- *@pargs: pargs
- *@paths: path of the files
- *@argv: argument vector
+ * custom_error - writes a custom error message to stderr
+ * @cmd: erroneous command
+ * Return: void
  */
-void execute_command(char *pargs[], char *paths[], char *argv[])
+void custom_error(char *cmd)
 {
-                char *executable_path;
-                pid_t pid;
-                int status;
-                char *env[] = {NULL};
+	static int errorCount;
+	char *prefix = "./hsh: ";
+	int cmdLen = 0;
 
-                executable_path = find_executable(pargs[0], paths);
-                if (executable_path == NULL)
-                {
-                        fprintf(stderr, "%s: %d: %s: not found\n", argv[0], 1, pargs[0]);
-                        return;
-                }
-                pid = fork();
-                if (pid == -1)
-                {
-                        perror("Error");
-                        exit(EXIT_FAILURE);
-                }
-                else if (pid == 0)
-                {
-                        if (execve(pargs[0], pargs, env) == -1)
-                        {
-                                free(executable_path);
-                                perror("error");
-                                exit(EXIT_FAILURE);
-                        }
-                }
-                else
-                {
-                        waitpid(pid, &status, 0);
-                }
-                free(executable_path);
+	while (cmd[cmdLen])
+		cmdLen++;
+
+	errorCount++;
+	write(STDERR_FILENO, prefix, 7);
+	print_number(errorCount);
+	write(STDERR_FILENO, ": ", 2);
+	write(STDERR_FILENO, cmd, cmdLen);
+	write(STDERR_FILENO, ": not found\n", 12);
 }
 
+/**
+ * print_number - prints an int to stderr
+ * @n: No to print out
+ * Return: Nothing
+ */
+void print_number(int n)
+{
+	char num;
+
+	if (n > 9)
+	{
+		print_number(n / 10);
+	}
+
+	num = (n % 10) + '0';
+	write(2, &num, 1);
+}
+
+/**
+ * execute_command - Executes the command and its arguments
+ * @env: env variables of the main function
+ * @cmd_line: Pointer to string containing commandline input
+ * @delimiter: Delimiting character
+ * Return: Nothing
+ */
+void execute_command(char **env, char *cmd_line, char *delimiter)
+{
+	int x = 0;
+	char *command;
+	struct stat *st = malloc(sizeof(struct stat));
+	char *arguments[100] = {"", NULL};
+
+	command = strtok(cmd_line, delimiter);
+
+	if (command != NULL)
+	{
+		arguments[0] = path(command);
+		while (arguments[x] != NULL)
+		{
+			x++;
+			arguments[x] = strtok(NULL, delimiter);
+		}
+
+		checkpath(arguments, env, &st, cmd_line);
+	}
+	free(st);
+}
+
+/**
+ * main - Entry point to the project
+ * @argc: no of command line arguments (void)
+ * @argv: Array of strings containing command-line args
+ * @env: Environmental variable
+ * Return: Always 0 (On success)
+ */
+int main(int argc __attribute__((unused)), char *argv[] __attribute__((unused)), char **env)
+{
+	size_t x = 0;
+	char *s_line = NULL;
+
+	while (1)
+	{
+		display_prompt();
+
+		if (getline(&s_line, &x, stdin) == -1)
+		{
+			/* free(s_line); */
+			exit(EXIT_SUCCESS);
+		}
+
+		if (_strcmp(s_line, "exit\n") == 0)
+		{
+			free(s_line);
+			exit(0); /* Quit */
+		}
+
+		execute_command(env, s_line, " \n\t\v\b\r\f");
+		free(s_line);
+	}
+	return (0);
+}
