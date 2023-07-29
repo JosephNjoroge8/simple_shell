@@ -18,13 +18,38 @@ void execution_cmd(char **env, char *cmd_part, char *limits)
 
 	if (cmd != NULL)
 	{
+		if (strcmp(cmd, "setenv") == 0)
+		{
+			i = 0;
+			arguments[0] = cmd;
+		}
+		else if (strcmp(cmd, "unsetenv") == 0)
+		{
+			i = 2;
+			arguments[0] = cmd;
+		}
+		else
+		{
+			arguments[0] = path(cmd);
+		}
 		arguments[0] = path(cmd);
 		while (arguments[i] != NULL)
 		{
 			i++;
 			arguments[i] = strtok(NULL, limits);
 		}
+		if (strcmp(cmd, "setenv") == 0)
+		{
+			set_environment(arguments);
+		}
+		else if (strcmp(cmd, "unsetenv") == 0)
+		{
+			unset_environment(arguments);
+		}
+		else
+		{
 		checkpath(arguments, env, &rt, cmd_part);
+		}
 	}
 	free(rt);
 }

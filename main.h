@@ -1,6 +1,5 @@
 #ifndef MAIN_H
 #define MAIN_H
-int main(int argc __attribute__((unused)), char *argv[] __attribute__((unused)), char **env);
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -13,14 +12,14 @@ int main(int argc __attribute__((unused)), char *argv[] __attribute__((unused)),
 #define MAX_INPUT 1024
 #define MAX_ARGS 100
 #define MAX_PATH 100
-#define MAX_PATH_LEN 4096
+#define MAX_PATH_LEN 7000
 void shell_start(void);
 char *_strcat(char *dest, char *src);
 char *path(char *cmd);
+void set_environment(char **arguments);
+void unset_environment(char **arguments);
 void checkpath(char **arguments, char **env, struct stat **st, char *cmd_line);
-void custom_error(char *cmd);
 void numbering_print(int n);
-void execute_command(char **env, char *cmd_line, char *delimiter);
 void execution_cmd(char **env, char *cmd_part, char *limits);
 void cusstimation_error(char *cmd);
 #endif

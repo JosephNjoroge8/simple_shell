@@ -47,7 +47,7 @@ char *_strcat(char *dest, char *src)
 }
 
 /**
- * path - Adds path prefix to the command
+ * path - addtion of path
  * @cmd: Command to prefix with path
  * Return: the complete path
  */
@@ -55,26 +55,25 @@ char *path(char *cmd)
 {
 	char p1[50] = "/bin/";
 	char p2[50] = "/usr/bin/";
-	struct stat st;
+	struct stat rt;
 
 	_strcat(p1, cmd);
 	_strcat(p2, cmd);
 
-	if (stat(p1, &st) == 0)
+	if (stat(p1, &rt) == 0)
 		return (strdup(p1));
-	else if (stat(p2, &st) == 0)
+	else if (stat(p2, &rt) == 0)
 		return (strdup(p2));
 
 	return (strdup(cmd));
 }
 
 /**
- * checkpath - checks validity of a path
- * @arguments: parameters
+ * checkpath - path checking
+ * @arguments: arguments
  * @env: environment variables
- * @st: pointer to path info
+ * @rt: pointer to path info
  * @cmd_line: a pointer to line of args
- * Return: nothing
  */
 void checkpath(char **arguments, char **env, struct stat **rt, char *cmd_line)
 {
